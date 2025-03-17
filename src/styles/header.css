@@ -1,0 +1,41 @@
+header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  z-index: 100;
+  box-shadow: rgba(0, 0, 0, 0.04) 0px 3px 5px;
+}
+
+header .header-nav {
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+}
+
+header .header-menu {
+  display: flex;
+  gap: 20px;
+}
+
+header .header-item.is-active .header-link {
+  color: #000000;
+}
+
+header .header-link {
+  font-weight: 400;
+  line-height: 20px;
+  font-size: 20px;
+  color: #6b6b6b;
+}
+
+header .header-link.is-active {
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  header .header-link {
+    font-size: 16px;
+  }
+}

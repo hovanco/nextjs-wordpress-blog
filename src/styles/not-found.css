@@ -1,0 +1,55 @@
+#page-not-found {
+  margin-top: 80px;
+}
+
+#page-not-found .not-found-content {
+  height: calc(100vh - 80px);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+#page-not-found .text-title {
+  margin-bottom: 24px;
+  font-size: 32px;
+}
+
+#page-not-found .text-content {
+  line-height: 1.5;
+}
+
+#page-not-found .text-404 {
+  font-size: 10rem;
+}
+
+#page-not-found .btn-home {
+  padding: 15px 50px;
+  margin: 40px 0;
+  /* display: inline-block; */
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  -webkit-line-clamp: 2;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+
+
+  color: #FFFFFF;
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.15;
+  border-radius: 30px;
+  border: none;
+
+
+
+  background: #EDA068;
+  background: linear-gradient(135deg, #EDA068, #F9B616);
+}
