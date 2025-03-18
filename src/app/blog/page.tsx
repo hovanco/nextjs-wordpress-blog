@@ -6,16 +6,16 @@ import IconTime from "../../assets/images/icon-time.png";
 import IconAuthor from "../../assets/images/icon-author.png";
 import IconSearch from "../../assets/images/icon-search.png";
 
+// BlogData class to map the response data
 class BlogData {
   id: string;
   slug: string;
-  postImage: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  authorName: string;
+  postImage: string | undefined;
+  title: string | undefined;
+  excerpt: string | undefined;
+  date: string | undefined;
+  authorName: string | undefined;
   categories: number[];
-
   constructor(data: any) {
     this.id = data?.id;
     this.slug = data?.slug;
@@ -23,11 +23,12 @@ class BlogData {
     this.title = data?.title?.rendered;
     this.excerpt = data?.excerpt?.rendered;
     this.date = data?.date;
-    this.authorName = data?._embedded?.author[0]?.name;
-    this.categories = data?._embedded["wp:term"][0];
+    this.authorName = data?._embedded?.author?.[0]?.name;
+    this.categories = data?._embedded?.["wp:term"]?.[0] ?? [];
   }
 }
 
+// Interface for category
 interface Category {
   id: number;
   name: string;
@@ -36,20 +37,18 @@ interface Category {
 const Blog = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [posts, setPosts] = useState<BlogData[]>([]);
-  const [searchNoResults, setSearchNoResults] = useState(false);
-
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [activeCategory, setActiveCategory] = useState<number | null>(null);
-
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(0);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(0);
   const postsPerPage = 10;
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryId, setCategoryId] = useState<number | null>(null);
+  const [activeCategory, setActiveCategory] = useState<number | null>(0);
+  const [searchNoResults, setSearchNoResults] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [isSearching, setIsSearching] = useState(false);
 
-  const [categoryId, setCategoryId] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-
+  // Fetch Posts function
   const fetchPosts = async (page = 1) => {
-    console.log(`Fetching all posts for page ${page}`);
     try {
       setIsLoading(true);
       const posts = `https://wp-blog-page.local/wp-json/wp/v2/posts?_embed&per_page=${postsPerPage}&page=${page}`;
@@ -58,15 +57,10 @@ const Blog = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      // console.log("data: ", data);
       const blogPosts = data.map((item: any) => new BlogData(item));
-
       setPosts(blogPosts);
-      setSearchNoResults(blogPosts.length === 0);
-
       const totalPosts = response.headers.get("X-WP-Total");
       const totalPostsNumber = totalPosts !== null ? Number(totalPosts) : 0;
-      setPosts(blogPosts);
       setTotalPages(Math.ceil(totalPostsNumber / postsPerPage));
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -75,6 +69,7 @@ const Blog = () => {
     }
   };
 
+  // Fetch Categories function
   const fetchCategories = async () => {
     try {
       const categories = `https://wp-blog-page.local/wp-json/wp/v2/categories`;
@@ -83,10 +78,10 @@ const Blog = () => {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("categories: ", data);
-      setCategories(data);
+      const updatedCategories = [{ id: 0, name: "All" }, ...data];
+      setCategories(updatedCategories);
     } catch (error) {
-      console.error("Error fetching posts:", error);
+      console.error("Error fetching categories:", error);
     } finally {
       setIsLoading(false);
     }
@@ -97,20 +92,26 @@ const Blog = () => {
     fetchCategories();
   }, []);
 
-  const fetchPostsByCategory = async (categoryId: number, page = 1) => {
+  // Fetch Posts by Category function
+  const fetchPostsByCategory = async (categoryId: number | null, page = 1) => {
     setIsLoading(true);
     setActiveCategory(categoryId);
+    setPosts([]);
     try {
-      const res = await fetch(
-        `https://wp-blog-page.local/wp-json/wp/v2/posts?_embed&categories=${categoryId}&per_page=${postsPerPage}&page=${page}`
-      );
-      if (!res.ok) {
+      let url = `https://wp-blog-page.local/wp-json/wp/v2/posts?_embed&per_page=${postsPerPage}&page=${page}`;
+      if (categoryId) {
+        url += `&categories=${categoryId}`;
+      }
+      const response = await fetch(url);
+      if (!response.ok) {
         throw new Error("Failed to fetch posts");
       }
-      const data = await res.json();
-      console.log("post cateId: ", data);
+      const data = await response.json();
       const blogPosts = data.map((item: any) => new BlogData(item));
       setPosts(blogPosts);
+      const totalPosts = response.headers.get("X-WP-Total");
+      const totalPostsNumber = totalPosts !== null ? Number(totalPosts) : 0;
+      setTotalPages(Math.ceil(totalPostsNumber / postsPerPage));
     } catch (error) {
       console.error("Error fetching posts by category: ", error);
     } finally {
@@ -118,63 +119,29 @@ const Blog = () => {
     }
   };
 
-  const handleCategoryChange = (categoryId: number) => {
-    // const newUrl = `/blog?categories=${categoryId}`;
-    // window.history.pushState(null, "", newUrl);
+  // Handle change when click btn category_id
+  const handleCategoryChange = (categoryId: number | null) => {
     setActiveCategory(categoryId);
-    if (categoryId === null) {
+    setCategoryId(categoryId);
+    setCurrentPage(1);
+    if (categoryId === 0) {
+      fetchPosts(1);
+    }
+    if (!categoryId) {
       fetchPosts();
     } else {
-      fetchPostsByCategory(categoryId);
+      fetchPostsByCategory(categoryId, 1);
     }
   };
 
-  // const searchPosts = async (query: any, page = 1) => {
-  //   try {
-  //     const response = await fetch(
-  //       `https://wp-blog-page.local/wp-json/wp/v2/posts?_embed&search=${query}&per_page=${postsPerPage}&page=${page}`
-  //     );
-  //     if (!response.ok)
-  //       throw new Error(`HTTP error! Status: ${response.status}`);
-  //     const data = await response.json();
-  //     console.log("data-search: ", data);
-  //     const blogPosts = data.map((item: any) => new BlogData(item));
-  //     const totalPosts = response.headers.get("X-WP-Total");
-  //     const totalPostsNumber = totalPosts !== null ? Number(totalPosts) : 0;
-  //     setPosts(blogPosts);
-  //     setTotalPages(Math.ceil(totalPostsNumber / postsPerPage));
-  //   } catch (error) {
-  //     console.error("Error searching posts:", error);
-  //   }
-  // };
-
-  // const handleSearch = () => {
-  //   setCurrentPage(1);
-  //   if (searchQuery) {
-  //     searchPosts(searchQuery, 1);
-  //   } else if (categoryId) {
-  //     fetchPostsByCategory(categoryId, 1);
-  //   } else {
-  //     fetchPosts(1);
-  //   }
-  // };
-
-  // const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-  //   if (e.key === "Enter") {
-  //     handleSearch();
-  //   }
-  // };
-
-  // const clearInput = () => {
-  //   setSearchQuery("");
-  // };
-
+  // Handle pagination
   const handlePageChange = (newPage: number) => {
     setCurrentPage(newPage);
-    if (searchQuery) {
-      // searchPosts(searchQuery, newPage);
-    } else if (categoryId) {
-      // fetchPostsByCategory(categoryId, newPage);
+    setSearchQuery("");
+    if (isSearching && searchQuery) {
+      searchPosts(searchQuery, newPage);
+    } else if (activeCategory) {
+      fetchPostsByCategory(activeCategory, newPage);
     } else {
       fetchPosts(newPage);
     }
@@ -196,6 +163,56 @@ const Blog = () => {
     return paginationItems;
   };
 
+  // Search Posts function
+  const searchPosts = async (query: string, page = 1) => {
+    setSearchQuery("");
+    try {
+      setIsLoading(true);
+      let url = `https://wp-blog-page.local/wp-json/wp/v2/posts?_embed&per_page=${postsPerPage}&page=${page}`;
+      if (query) {
+        url += `&search=${query}`;
+      }
+      const response = await fetch(url);
+      if (!response.ok)
+        throw new Error(`HTTP error! Status: ${response.status}`);
+      const data = await response.json();
+      const blogPosts = data.map((item: any) => new BlogData(item));
+      setPosts(blogPosts);
+      const totalPosts = response.headers.get("X-WP-Total");
+      const totalPostsNumber = totalPosts !== null ? Number(totalPosts) : 0;
+      setTotalPages(Math.ceil(totalPostsNumber / postsPerPage));
+      setSearchNoResults(blogPosts.length === 0);
+    } catch (error) {
+      console.error("Error searching posts:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle search
+  const handleSearch = () => {
+    setCurrentPage(1);
+    setIsSearching(!!searchQuery);
+    if (searchQuery) {
+      searchPosts(searchQuery, 1);
+      setSearchQuery("");
+      setCategoryId(null);
+      setActiveCategory(null);
+    } else {
+      fetchPosts(1);
+    }
+  };
+
+  // Handle KeyDown for search
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handleSearch();
+      setSearchQuery("");
+      setCategoryId(null);
+      setActiveCategory(null);
+    }
+  };
+
   return (
     <main id="blog-page">
       <div className="page">
@@ -208,7 +225,7 @@ const Blog = () => {
                 alt="Post Image"
                 width={180}
                 height={101}
-                // onClick={handleSearch}
+                onClick={handleSearch}
               />
               <div className="search-wrapper-input">
                 <input
@@ -218,13 +235,13 @@ const Blog = () => {
                   placeholder="Search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e?.target?.value)}
-                  // onKeyDown={handleKeyDown}
+                  onKeyDown={handleKeyDown}
                 />
                 {searchQuery && (
                   <button
                     className="close-icon"
                     type="reset"
-                    // onClick={clearInput}
+                    onClick={() => setSearchQuery("")}
                   >
                     &times;
                   </button>
@@ -243,10 +260,7 @@ const Blog = () => {
                   className={`category-item ${
                     activeCategory === category.id ? "active" : ""
                   }`}
-                  onClick={() => {
-                    console.log("cate id clicked: ", category.id);
-                    handleCategoryChange(category.id);
-                  }}
+                  onClick={() => handleCategoryChange(category.id)}
                 >
                   <span className="category-name">{category.name}</span>
                 </div>
@@ -336,20 +350,10 @@ const Blog = () => {
                 <div className="skeleton-text skeleton-border"></div>
               </article>
             </section>
-          ) : searchNoResults ? (
-            <div className="no-results">
-              <p className="results-title">
-                No results found for
-                <span className="text-search"> "{searchQuery}"</span>
-              </p>
-              <p className="results-sub-title">
-                We're sorry what you were looking for. Please try another way.
-              </p>
-            </div>
-          ) : posts.length > 0 ? (
-            <>
-              <div className="card-list">
-                {posts.map((post: BlogData) => (
+          ) : (
+            <section className="posts-list">
+              {posts.length > 0 ? (
+                posts.map((post) => (
                   <article key={post.id} className="card-item">
                     <Link className="card-link" href={`/blog/${post?.slug}`}>
                       <div className="card">
@@ -366,7 +370,7 @@ const Blog = () => {
                           <p
                             className="card-sub-title"
                             dangerouslySetInnerHTML={{
-                              __html: post?.excerpt,
+                              __html: post?.excerpt || "",
                             }}
                           />
                           <div className="card-footer">
@@ -379,7 +383,7 @@ const Blog = () => {
                               <time
                                 className="card-text-time"
                                 dangerouslySetInnerHTML={{
-                                  __html: formatDate(post?.date),
+                                  __html: formatDate(post?.date || ""),
                                 }}
                               />
                             </div>
@@ -392,7 +396,7 @@ const Blog = () => {
                               <span
                                 className="card-text-author"
                                 dangerouslySetInnerHTML={{
-                                  __html: post?.authorName,
+                                  __html: post?.authorName || "",
                                 }}
                               />
                             </div>
@@ -413,30 +417,32 @@ const Blog = () => {
                       </div>
                     </Link>
                   </article>
-                ))}
-              </div>
-              <div className="pagination">
-                <button
-                  disabled={currentPage === 1}
-                  onClick={() => handlePageChange(currentPage - 1)}
-                >
-                  Previous
-                </button>
-                <span>{renderPaginationItems()}</span>
-                <button
-                  className="btn-next"
-                  disabled={currentPage === totalPages}
-                  onClick={() => handlePageChange(currentPage + 1)}
-                >
-                  Next
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="no-results">
-              <p className="results-title">No posts available.</p>
-            </div>
+                ))
+              ) : (
+                <div className="no-results">
+                  <p className="results-title">No posts available.</p>
+                </div>
+              )}
+            </section>
           )}
+          {posts.length > 0 && totalPages > 1 ? (
+            <div className="pagination">
+              <button
+                disabled={currentPage === 1 || totalPages === 1}
+                onClick={() => handlePageChange(currentPage - 1)}
+              >
+                Previous
+              </button>
+              <span>{renderPaginationItems()}</span>
+              <button
+                className="btn-next"
+                disabled={currentPage === totalPages || totalPages === 1}
+                onClick={() => handlePageChange(currentPage + 1)}
+              >
+                Next
+              </button>
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

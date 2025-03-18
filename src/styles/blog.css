@@ -2,8 +2,6 @@
   font-size: 20px;
 }
 
-#blog-page .card-list {}
-
 #blog-page .card-item {
   padding: 20px 0;
   width: 100%;
@@ -116,7 +114,6 @@
 
 /* start skeleton */
 #blog-page .skeleton-list {
-  /* margin-top: 120px; */
   margin-top: 40px;
   display: flex;
   flex-direction: column;
@@ -247,24 +244,18 @@
 
 input:-webkit-autofill {
   background-color: white !important;
-  /* Change the background color */
   color: black !important;
-  /* Change the text color */
   border: 1px solid #ccc;
-  /* Optionally change border */
 }
 
 input:-webkit-autofill::first-line {
   color: black !important;
-  /* Change text color for first line */
 }
 
-/* Optional - to ensure styling across different browsers */
 input:-moz-autofill {
   background-color: white !important;
   color: black !important;
 }
-
 
 .search-container .search-icon {
   width: 30px;
@@ -274,7 +265,8 @@ input:-moz-autofill {
 }
 
 .search-container .search-title {
-  font-size: 46px;
+  margin-bottom: 30px;
+  font-size: 30px;
   font-weight: 500;
   word-break: break-all;
   color: #c9d1d6;
@@ -302,7 +294,6 @@ input:-moz-autofill {
   font-size: 24px;
   font-weight: 500;
   margin-bottom: 16px;
-
 }
 
 .text-search {
@@ -355,11 +346,13 @@ button.close-icon {
 }
 
 .category-item {
-  min-width: 100px;
+  width: 120px;
   border: 1px solid;
-  padding: 6px 40px;
+  padding: 6px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   border-radius: 4px;
-  text-align: center;
   cursor: pointer;
 }
 
@@ -394,6 +387,7 @@ button.close-icon {
 .pagination-item.active {
   color: white;
   background-color: #000000;
+  pointer-events: none;
 }
 
 .pagination-item:hover:not(.active) {
@@ -421,5 +415,3 @@ button.close-icon {
 .btn-next {
   min-width: 83.88px;
 }
-
-/* = */
