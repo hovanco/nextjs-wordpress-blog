@@ -250,9 +250,9 @@ const Blog = () => {
               </div>
             </div>
             <p className="search-title">
-              Results for
+              Results for:
               {searchValue && (
-                <span className="search-result"> {searchValue}</span>
+                <span className="search-result"> "{searchValue}"</span>
               )}
             </p>
           </div>

@@ -269,14 +269,13 @@ input:-moz-autofill {
   font-size: 30px;
   font-weight: 500;
   word-break: break-all;
-  color: #c9d1d6;
+  color: #000000;
 }
 
 .search-container .search-result {
   font-size: 46px !important;
   font-weight: 500 !important;
   word-break: break-all;
-  color: #242424;
 }
 
 /* start no result*/
