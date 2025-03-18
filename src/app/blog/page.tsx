@@ -43,9 +43,9 @@ const Blog = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoryId, setCategoryId] = useState<number | null>(null);
   const [activeCategory, setActiveCategory] = useState<number | null>(0);
-  const [searchNoResults, setSearchNoResults] = useState(false);
-  const [searchQuery, setSearchQuery] = useState<string>("");
   const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [searchValue, setSearchValue] = useState("");
 
   // Fetch Posts function
   const fetchPosts = async (page = 1) => {
@@ -124,6 +124,7 @@ const Blog = () => {
     setActiveCategory(categoryId);
     setCategoryId(categoryId);
     setCurrentPage(1);
+    setSearchValue("");
     if (categoryId === 0) {
       fetchPosts(1);
     }
@@ -181,7 +182,6 @@ const Blog = () => {
       const totalPosts = response.headers.get("X-WP-Total");
       const totalPostsNumber = totalPosts !== null ? Number(totalPosts) : 0;
       setTotalPages(Math.ceil(totalPostsNumber / postsPerPage));
-      setSearchNoResults(blogPosts.length === 0);
     } catch (error) {
       console.error("Error searching posts:", error);
     } finally {
@@ -198,6 +198,7 @@ const Blog = () => {
       setSearchQuery("");
       setCategoryId(null);
       setActiveCategory(null);
+      setSearchValue(searchQuery);
     } else {
       fetchPosts(1);
     }
@@ -249,7 +250,10 @@ const Blog = () => {
               </div>
             </div>
             <p className="search-title">
-              Results for <span className="search-result">{searchQuery}</span>
+              Results for
+              {searchValue && (
+                <span className="search-result"> {searchValue}</span>
+              )}
             </p>
           </div>
           <div className="category-container">
